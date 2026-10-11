@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1f4e8c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="윷놀이">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}</style>
+<title>우리집 윷놀이</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gowun+Dodum&display=swap">
+<style>
+/* 레이아웃: 왼쪽 멍석 말판 + 오른쪽 윷 던지기 판(좁은 화면에서는 위아래로) */
+:root{
+  --mat:#e6d6b0;        /* 멍석(짚) */
+  --mat-line:#3b2f22;   /* 먹선 */
+  --ground:#f2ece0;     /* 마루 바탕 */
+  --panel:#fffaf0;
+  --ink:#231c15;
+  --muted:#6f6353;
+  --accent:#1f4e8c;     /* 쪽빛 */
+  --line:#d8ccb4;
+  --t0:#1f5fbf; --t1:#c8322b; --t2:#d9a400; --t3:#2e2a26;
+  --display:"Black Han Sans","Noto Sans KR","Apple SD Gothic Neo",sans-serif;
+  --body:"Gowun Dodum","Noto Sans KR","Apple SD Gothic Neo",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --mat:#5a4a32;--mat-line:#f0e2c4;--ground:#17140f;--panel:#221d16;--ink:#f3ead8;--muted:#b9ab92;
+  --accent:#7fb0f0;--line:#3d3427;--t0:#4f8ff0;--t1:#ef5a50;--t2:#f2c430;--t3:#e9e1d2;color-scheme:dark}}
+:root[data-theme="dark"]{--mat:#5a4a32;--mat-line:#f0e2c4;--ground:#17140f;--panel:#221d16;--ink:#f3ead8;--muted:#b9ab92;
+  --accent:#7fb0f0;--line:#3d3427;--t0:#4f8ff0;--t1:#ef5a50;--t2:#f2c430;--t3:#e9e1d2;color-scheme:dark}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{background:var(--ground);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;padding-inline:16px;padding-block:20px 40px}
+.wrap{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 16px}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(28px,5vw,40px);margin:0;letter-spacing:.02em;text-wrap:balance}
+h1 small{display:block;font-family:var(--body);font-size:15px;color:var(--muted);letter-spacing:0;margin-top:4px}
+.game{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:820px){.game{grid-template-columns:1fr}}
+.boardbox{background:var(--mat);border-radius:18px;padding:14px;box-shadow:inset 0 0 0 3px color-mix(in srgb,var(--mat-line) 25%,transparent)}
+svg{display:block;width:100%;height:auto;max-width:100%}
+.side{display:flex;flex-direction:column;gap:14px;min-width:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px}
+.turn{display:flex;align-items:center;gap:10px;font-size:18px}
+.turn .dot{width:18px;height:18px;border-radius:50%;flex:none}
+.turn b{font-family:var(--display);font-weight:400;font-size:22px}
+.sticks{display:flex;gap:10px;justify-content:center;padding:18px 0 8px;perspective:600px}
+.stick{width:30px;height:120px;border-radius:15px;position:relative;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.3,1.6,.5,1)}
+.stick .f,.stick .b{position:absolute;inset:0;border-radius:15px;backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:space-evenly}
+.stick .f{background:#f4e6c4;border:2px solid #8a6a3c;color:#5a3d1a;font-size:14px;font-weight:700}
+.stick .b{background:linear-gradient(90deg,#7a5228,#b07c43 45%,#7a5228);transform:rotateX(180deg);border:2px solid #5a3a1a}
+.stick.down{transform:rotateX(180deg)}
+.stick.spin{animation:spin .6s linear}
+@keyframes spin{from{transform:rotateX(0) translateY(0)}50%{transform:rotateX(540deg) translateY(-26px)}to{transform:rotateX(1080deg) translateY(0)}}
+@media (prefers-reduced-motion:reduce){.stick,.stick.spin{animation:none;transition:none}}
+.result{text-align:center;font-family:var(--display);font-size:46px;line-height:1.1;min-height:52px;color:var(--accent)}
+.hint{text-align:center;color:var(--muted);font-size:14px;min-height:21px}
+button{font-family:var(--body);font-size:16px;cursor:pointer;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:10px 14px}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button:disabled{opacity:.45;cursor:not-allowed}
+.throw{width:100%;font-family:var(--display);font-size:24px;padding:14px;background:var(--accent);color:#fff;border:none}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px}
+.chip{font-family:var(--display);font-size:20px;padding:6px 16px;border-radius:999px}
+.chip[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+.teams{display:flex;flex-direction:column;gap:8px}
+.team{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;border:1px solid transparent}
+.team.now{border-color:var(--line);background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.team .nm{font-weight:700;min-width:64px}
+.team .who{font-size:13px;color:var(--muted)}
+.hand{display:flex;gap:6px;margin-left:auto;align-items:center}
+.tok{width:24px;height:24px;border-radius:50%;border:2px solid rgba(0,0,0,.35);padding:0}
+.tok:disabled{opacity:1;cursor:default}.tok.done{opacity:.25}
+.tok.can{box-shadow:0 0 0 3px var(--panel),0 0 0 6px var(--accent);animation:pulse 1s ease-in-out infinite alternate}
+@keyframes pulse{to{box-shadow:0 0 0 3px var(--panel),0 0 0 6px transparent}}
+.log{font-size:14px;color:var(--muted);max-height:120px;overflow:auto;margin:0;padding-left:18px}
+details summary{cursor:pointer;font-weight:700}
+details ul{margin:8px 0 0;padding-left:20px;font-size:14px;color:var(--muted)}
+.setup{display:flex;flex-direction:column;gap:10px}
+.setup .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.setup label{font-size:14px;color:var(--muted)}
+select{font-family:var(--body);font-size:15px;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+.win{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45);padding:16px}
+.win .card{text-align:center;max-width:360px}
+.win h2{font-family:var(--display);font-weight:400;font-size:38px;margin:0 0 8px}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>우리집 윷놀이<small>휴대폰 한 대로 둘러앉아 하는 가족 윷놀이</small></h1>
+    <button id="newBtn" type="button">새 판 설정</button>
+  </header>
+
+  <div class="game">
+    <div class="boardbox"><svg id="board" viewBox="-12 -12 124 124" role="img" aria-label="윷놀이 말판"></svg></div>
+
+    <div class="side">
+      <div class="card">
+        <div class="turn"><span class="dot" id="turnDot"></span><b id="turnName">청팀</b><span id="turnWho"></span></div>
+        <div class="sticks" id="sticks" aria-hidden="true"></div>
+        <div class="result" id="result" aria-live="polite"></div>
+        <button class="throw" id="throwBtn" type="button">윷 던지기</button>
+        <div class="chips" id="chips"></div>
+        <div class="hint" id="hint"></div>
+      </div>
+
+      <div class="card teams" id="teams"></div>
+
+      <div class="card">
+        <details>
+          <summary>놀이 방법</summary>
+          <ul>
+            <li>도 1칸, 개 2칸, 걸 3칸, 윷 4칸, 모 5칸. 빽도는 한 칸 뒤로 갑니다.</li>
+            <li>윷이나 모가 나오면 한 번 더 던집니다. 상대 말을 잡아도 한 번 더 던집니다.</li>
+            <li>나온 결과를 고른 뒤, 움직일 말(말판 위의 말 또는 아래 대기 말)을 누르세요.</li>
+            <li>모서리나 한가운데에 딱 멈추면 다음 차례에 지름길로 갑니다.</li>
+            <li>내 말끼리 같은 자리에 서면 업혀서 함께 움직입니다.</li>
+            <li>출발점까지 돌아오면 완주. 말을 모두 먼저 완주한 팀이 이깁니다.</li>
+          </ul>
+        </details>
+        <ol class="log" id="log"></ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="win" id="setup" hidden>
+  <div class="card setup" role="dialog" aria-label="새 판 설정">
+    <h2 style="font-family:var(--display);font-weight:400;margin:0">새 판 설정</h2>
+    <div class="row"><label for="nTeams">팀 수</label>
+      <select id="nTeams"><option>2</option><option>3</option><option>4</option></select>
+      <label for="nPieces">팀당 말</label>
+      <select id="nPieces"><option>2</option><option>3</option><option selected>4</option></select></div>
+    <div id="teamRows" class="setup"></div>
+    <div class="row"><button id="startBtn" type="button" class="throw" style="font-size:20px">시작하기</button>
+      <button id="cancelBtn" type="button">닫기</button></div>
+  </div>
+</div>
+
+<div class="win" id="winBox" hidden>
+  <div class="card"><h2 id="winText">청팀 승리!</h2><p>한 판 더 하시겠어요?</p>
+    <button id="againBtn" type="button" class="throw" style="font-size:20px">한 판 더</button></div>
+</div>
+
+<script>
+(function(){
+const TEAM_NAMES=["청팀","홍팀","황팀","흑팀"];
+const TEAM_VARS=["--t0","--t1","--t2","--t3"];
+const RES={ "-1":"빽도",1:"도",2:"개",3:"걸",4:"윷",5:"모" };
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+/* ---------- 말판 노드 ---------- */
+const N={};
+const P=(id,x,y,big)=>N[id]={id,x,y,big:!!big};
+P("o0",100,100,1); for(let i=1;i<=4;i++)P("o"+i,100,100-20*i);
+P("o5",100,0,1); for(let i=6;i<=9;i++)P("o"+i,100-20*(i-5),0);
+P("o10",0,0,1); for(let i=11;i<=14;i++)P("o"+i,0,20*(i-10));
+P("o15",0,100,1); for(let i=16;i<=19;i++)P("o"+i,20*(i-15),100);
+P("a1",83.33,16.67);P("a2",66.67,33.33);P("C",50,50,1);P("a3",33.33,66.67);P("a4",16.67,83.33);
+P("b1",16.67,16.67);P("b2",33.33,33.33);P("b3",66.67,66.67);P("b4",83.33,83.33);
+
+function nextNode(prev,cur,first){
+  if(cur==="S")return "o1";
+  if(cur==="o0")return "END";
+  if(first){ if(cur==="o5")return "a1"; if(cur==="o10")return "b1"; if(cur==="C")return "b3"; }
+  if(cur[0]==="o"){const i=+cur.slice(1);return i<19?"o"+(i+1):"END";}
+  return {a1:"a2",a2:"C",a3:"a4",a4:"o15",b1:"b2",b2:"C",b3:"b4",b4:"END"}[cur] || (prev==="a2"?"a3":"b3");
+}
+/* 말의 경로(path)를 따라 n칸 이동한 결과 */
+function simulate(path,n){
+  let p=path.slice();
+  if(n===-1){
+    if(!p.length)return null;
+    if(p.length>=2)p.pop(); else p=[p[0]==="o0"?"o19":"o0"];
+    return p;
+  }
+  let cur=p.length?p[p.length-1]:"S";
+  for(let k=0;k<n;k++){
+    const prev=p.length>=2?p[p.length-2]:null;
+    const nx=nextNode(prev,cur,k===0);
+    p.push(nx); cur=nx;
+    if(nx==="END")break;
+  }
+  return p;
+}
+const posOf=pc=>pc.done?"END":(pc.path.length?pc.path[pc.path.length-1]:"S");
+
+/* ---------- 상태 ---------- */
+let S=null;
+function newGame(cfg){
+  S={cfg,turn:0,results:[],sel:0,canThrow:true,log:[],sticks:[1,0,1,0],winner:null,
+     teams:cfg.teams.map((t,i)=>({name:TEAM_NAMES[i],cpu:t.cpu,pieces:Array.from({length:cfg.pieces},()=>({path:[],done:false}))}))};
+  addLog("새 판을 시작했습니다. "+S.teams[0].name+"부터 던지세요.");
+  render(); maybeCpu();
+}
+function addLog(t){S.log.unshift(t);S.log=S.log.slice(0,30);}
+
+/* ---------- 윷 던지기 ---------- */
+function rollSticks(){
+  const flat=[0,1,2,3].map(()=>Math.random()<0.6?1:0);   // 1 = 배(평평한 면)가 위
+  const n=flat.reduce((a,b)=>a+b,0);
+  let r=n===0?5:n;
+  if(n===1&&flat[0]===1)r=-1;                             // 첫째 윷에 빽도 표시
+  return {flat,r};
+}
+function doThrow(){
+  if(!S.canThrow||S.winner)return;
+  const {flat,r}=rollSticks();
+  S.sticks=flat; S.results.push(r); S.sel=S.results.length-1;
+  S.canThrow=(r===4||r===5);
+  animateSticks();
+  addLog(`${cur().name}: ${RES[r]}${S.canThrow?" (한 번 더!)":""}`);
+  showResult(RES[r]+(S.canThrow?"! 한 번 더":"!"));
+  pruneResults(); render(); maybeCpu();
+}
+function cur(){return S.teams[S.turn];}
+/* 쓸 수 없는 결과(말판에 말이 없는데 빽도)는 버림 */
+function pruneResults(){
+  if(S.canThrow)return;
+  let changed=true;
+  while(changed){changed=false;
+    for(let i=0;i<S.results.length;i++){
+      if(movablePieces(S.results[i]).length===0){addLog(`${RES[S.results[i]]}: 움직일 말이 없어 넘어갑니다`);S.results.splice(i,1);changed=true;break;}
+    }}
+  S.sel=Math.min(S.sel,Math.max(0,S.results.length-1));
+  if(!S.results.length&&!S.canThrow)endTurn();
+}
+function movablePieces(r){
+  const t=cur(), seen=new Set(), out=[];
+  t.pieces.forEach((pc,i)=>{
+    if(pc.done)return;
+    const pos=posOf(pc);
+    if(r===-1&&pos==="S")return;
+    const key=pos==="S"?"S"+i:pos;      // 대기 말은 각각, 말판 위 말은 자리별로 한 번
+    if(pos==="S"){ if(seen.has("S"))return; seen.add("S"); }
+    else { if(seen.has(key))return; seen.add(key); }
+    out.push(i);
+  });
+  return out;
+}
+/* 말(업힌 말 포함) 이동 */
+function movePiece(idx){
+  if(S.winner||!S.results.length)return;
+  const r=S.results[S.sel], t=cur(), pc=t.pieces[idx];
+  if(!movablePieces(r).includes(idx)&&!stackMates(idx).some(j=>movablePieces(r).includes(j)))return;
+  const from=posOf(pc);
+  const group=from==="S"?[idx]:stackMates(idx);
+  const np=simulate(pc.path,r); if(!np)return;
+  const to=np[np.length-1];
+  group.forEach(j=>{const q=t.pieces[j]; if(to==="END"){q.done=true;q.path=np.slice();} else q.path=np.slice();});
+  S.results.splice(S.sel,1); S.sel=0;
+  let msg=`${t.name} ${RES[r]}로 ${group.length>1?group.length+"동 ":""}`;
+  if(to==="END"){msg+="완주!";}
+  else{
+    msg+=label(to)+" 도착";
+    // 잡기
+    let caught=0;
+    S.teams.forEach((o,ti)=>{ if(ti===S.turn)return; o.pieces.forEach(q=>{ if(!q.done&&posOf(q)===to){q.path=[];caught++;} }); });
+    if(caught){msg+=` · 상대 말 ${caught}개 잡음! 한 번 더`; S.canThrow=true; showResult("잡았다!");}
+    else if(group.length===1&&t.pieces.some((q,j)=>j!==idx&&!q.done&&posOf(q)===to))msg+=" · 업었습니다";
+  }
+  addLog(msg);
+  if(t.pieces.every(q=>q.done)){S.winner=S.turn;render();showWin();return;}
+  pruneResults(); render(); maybeCpu();
+}
+function stackMates(idx){const t=cur(),pos=posOf(t.pieces[idx]); if(pos==="S"||pos==="END")return[idx]; return t.pieces.map((q,j)=>(!q.done&&posOf(q)===pos)?j:-1).filter(j=>j>=0);}
+function endTurn(){
+  S.turn=(S.turn+1)%S.teams.length; S.results=[]; S.sel=0; S.canThrow=true;
+  showResult(""); render(); maybeCpu();
+}
+function label(id){
+  if(id==="o0")return "출발점"; if(id==="C")return "한가운데";
+  if(["o5","o10","o15"].includes(id))return "모서리"; return "다음 칸";
+}
+
+/* ---------- 컴퓨터 팀 ---------- */
+function stepsLeft(path){let p=path.slice(),n=0;while(n<40){const s=simulate(p,1);n++;if(s[s.length-1]==="END")return n;p=s;}return 40;}
+function scoreMove(idx,r){
+  const t=cur(),pc=t.pieces[idx],np=simulate(pc.path,r); if(!np)return -1e9;
+  const to=np[np.length-1],group=posOf(pc)==="S"?1:stackMates(idx).length;
+  let s=0;
+  if(to==="END")return 1000+group*50;
+  S.teams.forEach((o,ti)=>{if(ti!==S.turn)o.pieces.forEach(q=>{if(!q.done&&posOf(q)===to)s+=500;});});
+  if(["o5","o10","C"].includes(to))s+=60;
+  s+= (stepsLeft(pc.path.length?pc.path:["o0"].slice(0,0))-stepsLeft(np))*8*group;
+  if(t.pieces.some((q,j)=>j!==idx&&!q.done&&posOf(q)===to))s+=25;
+  // 상대 말 바로 앞(1~3칸 뒤에 상대)이면 감점
+  S.teams.forEach((o,ti)=>{if(ti!==S.turn)o.pieces.forEach(q=>{if(q.done)return;const qp=q.path;for(const rr of [1,2,3]){const sim=simulate(qp,rr);if(sim&&sim[sim.length-1]===to)s-=40*group;}});});
+  return s;
+}
+let cpuTimer=null;
+function maybeCpu(){
+  clearTimeout(cpuTimer);
+  if(!S||S.winner||!cur().cpu)return;
+  cpuTimer=setTimeout(()=>{
+    if(S.canThrow){doThrow();return;}
+    let best=null;
+    S.results.forEach((r,ri)=>movablePieces(r).forEach(i=>{const sc=scoreMove(i,r);if(!best||sc>best.sc)best={sc,ri,i};}));
+    if(best){S.sel=best.ri;movePiece(best.i);}
+  },900);
+}
+
+/* ---------- 그리기 ---------- */
+const svg=document.getElementById("board");
+function el(tag,attrs,parent){const e=document.createElementNS("http://www.w3.org/2000/svg",tag);for(const k in attrs)e.setAttribute(k,attrs[k]);(parent||svg).appendChild(e);return e;}
+function drawBoard(){
+  svg.innerHTML="";
+  const ink=css("--mat-line");
+  el("rect",{x:0,y:0,width:100,height:100,fill:"none",stroke:ink,"stroke-width":1.1});
+  el("line",{x1:100,y1:0,x2:0,y2:100,stroke:ink,"stroke-width":1.1});
+  el("line",{x1:0,y1:0,x2:100,y2:100,stroke:ink,"stroke-width":1.1});
+  for(const id in N){const n=N[id];
+    if(n.big){el("circle",{cx:n.x,cy:n.y,r:6.4,fill:css("--mat"),stroke:ink,"stroke-width":1.1});el("circle",{cx:n.x,cy:n.y,r:4.4,fill:"none",stroke:ink,"stroke-width":.7});}
+    else el("circle",{cx:n.x,cy:n.y,r:3.6,fill:css("--mat"),stroke:ink,"stroke-width":1});
+    n.ring=el("circle",{cx:n.x,cy:n.y,r:7.6,fill:"none",stroke:css("--accent"),"stroke-width":1.4,"stroke-dasharray":"2 1.5",opacity:0});
+  }
+  const t=el("text",{x:100,y:110.5,"text-anchor":"middle","font-size":4.6,fill:ink,"font-family":"Black Han Sans, sans-serif"});t.textContent="출발 ↑";
+}
+function teamColor(i){return css(TEAM_VARS[i]);}
+function renderPieces(){
+  svg.querySelectorAll(".pc").forEach(e=>e.remove());
+  for(const id in N)N[id].ring.setAttribute("opacity",0);
+  const r=S.results[S.sel], canMove=S.results.length&&!cur().cpu&&!S.winner;
+  const movable=canMove?movablePieces(r):[];
+  const groups={};
+  S.teams.forEach((t,ti)=>t.pieces.forEach((pc,i)=>{const p=posOf(pc);if(p==="S"||p==="END")return;(groups[p+"|"+ti]=groups[p+"|"+ti]||{p,ti,list:[]}).list.push(i);}));
+  const byNode={};
+  Object.values(groups).forEach(g=>{(byNode[g.p]=byNode[g.p]||[]).push(g);});
+  Object.entries(byNode).forEach(([p,gs])=>gs.forEach((g,k)=>{
+    const n=N[p],off=(k-(gs.length-1)/2)*7;
+    const gEl=el("g",{class:"pc",tabindex:-1});
+    const isMy=g.ti===S.turn&&movable.some(i=>g.list.includes(i));
+    if(isMy){el("circle",{cx:n.x+off,cy:n.y,r:6.8,fill:"none",stroke:css("--accent"),"stroke-width":1.4},gEl);}
+    el("circle",{cx:n.x+off,cy:n.y,r:5.2,fill:teamColor(g.ti),stroke:"rgba(0,0,0,.45)","stroke-width":.8},gEl);
+    if(g.list.length>1){const tx=el("text",{x:n.x+off,y:n.y+1.9,"text-anchor":"middle","font-size":5.4,fill:"#fff","font-family":"Black Han Sans, sans-serif"},gEl);tx.textContent=g.list.length;}
+    if(isMy){
+      gEl.style.cursor="pointer";gEl.setAttribute("tabindex",0);gEl.setAttribute("role","button");
+      gEl.setAttribute("aria-label",`${S.teams[g.ti].name} 말 ${g.list.length}개 움직이기`);
+      const idx=g.list[0];
+      gEl.addEventListener("click",()=>movePiece(idx));
+      gEl.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();movePiece(idx);}});
+      gEl.addEventListener("pointerenter",()=>preview(idx));
+      gEl.addEventListener("pointerleave",clearPreview);
+    }
+  }));
+}
+function preview(idx){
+  const pc=cur().pieces[idx],np=simulate(pc.path,S.results[S.sel]);if(!np)return;
+  const to=np[np.length-1]; clearPreview(); if(N[to])N[to].ring.setAttribute("opacity",1);
+}
+function clearPreview(){for(const id in N)N[id].ring.setAttribute("opacity",0);}
+
+function renderSticks(){
+  const box=document.getElementById("sticks");
+  if(!box.children.length){for(let i=0;i<4;i++){const s=document.createElement("div");s.className="stick";
+    s.innerHTML=`<div class="f">${i===0?"<span>빽</span>":""}<span>✕</span><span>✕</span><span>✕</span></div><div class="b"></div>`;box.appendChild(s);}}
+  [...box.children].forEach((s,i)=>s.classList.toggle("down",!S.sticks[i]));
+}
+function animateSticks(){
+  const box=document.getElementById("sticks");renderSticks();
+  [...box.children].forEach(s=>{s.classList.remove("spin");void s.offsetWidth;s.classList.add("spin");});
+  setTimeout(()=>[...box.children].forEach(s=>s.classList.remove("spin")),620);
+}
+function showResult(t){document.getElementById("result").textContent=t;}
+
+function render(){
+  const t=cur();
+  document.getElementById("turnDot").style.background=teamColor(S.turn);
+  document.getElementById("turnName").textContent=t.name;
+  document.getElementById("turnWho").textContent=t.cpu?"(컴퓨터)":"차례";
+  const tb=document.getElementById("throwBtn");
+  tb.disabled=!S.canThrow||t.cpu||S.winner!==null;
+  tb.textContent=S.canThrow?(S.results.length?"한 번 더 던지기":"윷 던지기"):"말을 움직이세요";
+  // 결과 칩
+  const chips=document.getElementById("chips");chips.innerHTML="";
+  S.results.forEach((r,i)=>{const b=document.createElement("button");b.type="button";b.className="chip";b.textContent=RES[r];
+    b.setAttribute("aria-pressed",i===S.sel);b.disabled=t.cpu;b.onclick=()=>{S.sel=i;render();};chips.appendChild(b);});
+  document.getElementById("hint").textContent=t.cpu?"컴퓨터가 생각 중입니다…":
+    S.canThrow?(S.results.length?"윷이나 모가 나와 한 번 더 던집니다":"윷을 던지세요"):
+    S.results.length?`${RES[S.results[S.sel]]}로 움직일 말을 누르세요`:"";
+  // 팀 목록과 대기 말
+  const tm=document.getElementById("teams");tm.innerHTML="";
+  const r=S.results[S.sel],movable=(S.results.length&&!t.cpu&&!S.winner)?movablePieces(r):[];
+  S.teams.forEach((o,ti)=>{
+    const row=document.createElement("div");row.className="team"+(ti===S.turn?" now":"");
+    const done=o.pieces.filter(q=>q.done).length,wait=o.pieces.filter(q=>!q.done&&!q.path.length);
+    row.innerHTML=`<span class="dot" style="width:14px;height:14px;border-radius:50%;background:${teamColor(ti)}"></span><span class="nm">${o.name}</span><span class="who">${o.cpu?"컴퓨터":"사람"} · 완주 ${done}/${o.pieces.length}</span>`;
+    const hand=document.createElement("div");hand.className="hand";
+    o.pieces.forEach((q,i)=>{
+      if(q.path.length&&!q.done)return;
+      const b=document.createElement("button");b.type="button";b.className="tok"+(q.done?" done":"");b.style.background=teamColor(ti);
+      b.setAttribute("aria-label",q.done?`${o.name} 완주한 말`:`${o.name} 대기 말 올리기`);
+      const can=ti===S.turn&&!q.done&&movable.includes(i);
+      if(can){b.classList.add("can");b.onclick=()=>movePiece(i);} else b.disabled=true;
+      hand.appendChild(b);
+    });
+    row.appendChild(hand);tm.appendChild(row);
+  });
+  document.getElementById("log").innerHTML=S.log.slice(0,8).map(l=>`<li>${l}</li>`).join("");
+  renderSticks(); renderPieces();
+}
+function showWin(){document.getElementById("winText").textContent=S.teams[S.winner].name+" 승리!";document.getElementById("winBox").hidden=false;}
+
+/* ---------- 설정 ---------- */
+const setupBox=document.getElementById("setup");
+function buildTeamRows(){
+  const n=+document.getElementById("nTeams").value,box=document.getElementById("teamRows");box.innerHTML="";
+  for(let i=0;i<n;i++){const d=document.createElement("div");d.className="row";
+    d.innerHTML=`<span class="dot" style="width:14px;height:14px;border-radius:50%;background:${teamColor(i)}"></span><label for="who${i}" style="min-width:44px">${TEAM_NAMES[i]}</label>
+    <select id="who${i}"><option value="h">사람</option><option value="c"${i>0&&n===2&&lastCfg.teams[1]?.cpu?" selected":""}>컴퓨터</option></select>`;box.appendChild(d);}
+}
+let lastCfg={teams:[{cpu:false},{cpu:false}],pieces:4};
+document.getElementById("newBtn").onclick=()=>{document.getElementById("nTeams").value=lastCfg.teams.length;document.getElementById("nPieces").value=lastCfg.pieces;buildTeamRows();setupBox.hidden=false;};
+document.getElementById("nTeams").onchange=buildTeamRows;
+document.getElementById("cancelBtn").onclick=()=>setupBox.hidden=true;
+document.getElementById("startBtn").onclick=()=>{
+  const n=+document.getElementById("nTeams").value;
+  lastCfg={pieces:+document.getElementById("nPieces").value,teams:Array.from({length:n},(_,i)=>({cpu:document.getElementById("who"+i).value==="c"}))};
+  setupBox.hidden=true; document.getElementById("winBox").hidden=true; showResult(""); newGame(lastCfg);
+};
+document.getElementById("againBtn").onclick=()=>{document.getElementById("winBox").hidden=true;showResult("");newGame(lastCfg);};
+document.getElementById("throwBtn").onclick=doThrow;
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",()=>{if(S){drawBoard();render();}});
+new MutationObserver(()=>{if(S){drawBoard();render();}}).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+
+/* ---------- 시작 (처음 화면: 사람 vs 컴퓨터 예시 판) ---------- */
+function start(data){
+  drawBoard();
+  if(data&&data.S){S=data.S;lastCfg=data.lastCfg||lastCfg;render();maybeCpu();}
+  else{lastCfg={teams:[{cpu:false},{cpu:true}],pieces:4};newGame(lastCfg);}
+}
+window.claude?.hot?.snapshot?.(()=>({S,lastCfg}));
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+})();
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+</script>
+</body>
+</html>

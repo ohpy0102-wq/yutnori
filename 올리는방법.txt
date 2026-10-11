@@ -1,0 +1,26 @@
+[우리집 윷놀이 - 홈 화면 앱 올리는 방법]
+
+1) GitHub 저장소 만들기
+   - github.com 로그인 → 오른쪽 위 + → New repository
+   - Repository name: yutnori   /   Public 선택   →  Create repository
+     (무료 계정은 공개 저장소에서만 GitHub Pages 가 됩니다. 게임 코드만 올라가니 비밀 정보는 없습니다)
+
+2) 파일 올리기
+   - 만들어진 저장소 화면에서 "uploading an existing file" 클릭
+   - 이 폴더의 파일 8개(index.html, manifest.webmanifest, sw.js, 아이콘 png 4개, 이 txt는 빼도 됨)를 끌어다 놓기
+   - 아래 Commit changes 클릭
+
+3) GitHub Pages 켜기
+   - 저장소 상단 Settings → 왼쪽 메뉴 Pages
+   - Source: Deploy from a branch / Branch: main, 폴더 / (root) → Save
+   - 1~2분 뒤 같은 화면 위쪽에 주소가 뜹니다:  https://<깃허브아이디>.github.io/yutnori/
+
+4) 휴대폰에 설치
+   - 안드로이드(크롬): 주소 열기 → 오른쪽 위 ⋮ → "홈 화면에 추가" 또는 "앱 설치"
+   - 아이폰(사파리): 주소 열기 → 아래 공유 버튼(□↑) → "홈 화면에 추가"
+   - 홈 화면의 윷 아이콘을 누르면 주소창 없이 전체 화면으로 열립니다.
+   - 한 번 연 뒤에는 인터넷이 없어도 실행됩니다.
+
+5) 고친 버전 올릴 때
+   - 같은 저장소에 index.html 을 다시 업로드(덮어쓰기)
+   - sw.js 첫 줄 근처의 "yutnori-v1" 을 v2, v3 처럼 바꿔서 같이 올리면 휴대폰에도 새 버전이 확실히 반영됩니다.
